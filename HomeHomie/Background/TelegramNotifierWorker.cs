@@ -8,7 +8,7 @@ namespace HomeHomie.Background
     internal class TelegramNotifierWorker : IHostedService
     {
         private Timer? _timer = null;
-        
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _timer = new Timer(CheckGraphics, null, TimeSpan.Zero, TimeSpan.FromMinutes(10));
@@ -50,7 +50,7 @@ namespace HomeHomie.Background
             _timer?.Change(Timeout.Infinite, 0);
             return Task.CompletedTask;
         }
-        
+
         public void Dispose()
         {
             _timer?.Dispose();

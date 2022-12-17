@@ -1,15 +1,9 @@
 ﻿using HomeHomie.Database;
 using HomeHomie.Database.Entities;
-using HomeHomie.Telegram;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HomeHomie.Background
 {
@@ -40,7 +34,7 @@ namespace HomeHomie.Background
                 {
                     imageStream = await PullGraphicAsync();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                     return;
@@ -101,7 +95,7 @@ namespace HomeHomie.Background
 
             List<bool> values = Enumerable.Repeat(false, 24).ToList();
 
-            for(int i = startWidthPixel; i < img.Size().Width; i++)
+            for (int i = startWidthPixel; i < img.Size().Width; i++)
             {
                 var currentPixel = img[i, startHeightPixel];
                 if (currentPixel == lastPixel) continue;
@@ -109,42 +103,42 @@ namespace HomeHomie.Background
 
                 if (startTrigger && currentPixel == blue) continue;
 
-                if(startTrigger && currentPixel == black)
+                if (startTrigger && currentPixel == black)
                 {
                     startTrigger = false;
                     blackTrigger = true;
                     continue;
                 }
 
-                if(currentPixel == gray && blackTrigger)
+                if (currentPixel == gray && blackTrigger)
                 {
                     grayTrigger = true;
                     blackTrigger = false;
                     continue;
                 }
 
-                if(currentPixel == black && grayTrigger)
+                if (currentPixel == black && grayTrigger)
                 {
                     grayTrigger = false;
                     blackTrigger = true;
                     continue;
                 }
 
-                if(currentPixel == blue && blackTrigger)
+                if (currentPixel == blue && blackTrigger)
                 {
                     blackTrigger = false;
                     values[currentHour] = false;
                     continue;
                 }
 
-                if(currentPixel == white && blackTrigger)
+                if (currentPixel == white && blackTrigger)
                 {
                     blackTrigger = false;
                     values[currentHour] = true;
                     continue;
                 }
 
-                if(currentPixel == black)
+                if (currentPixel == black)
                 {
                     blackTrigger = true;
                     currentHour++;

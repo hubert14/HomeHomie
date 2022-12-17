@@ -88,14 +88,7 @@ namespace HomeHomie.Telegram
         private async Task ProcessGraphicMessageAsync(ITelegramBotClient bot, Message message)
         {
             var chatId = new ChatId(message.From.Id);
-            //var graphicForToday = await MongoProvider.GetDataFromMongoAsync();
-
-            var graphicForToday = new ElectricityGraphic()
-            {
-                Date = "17.12.2022",
-                OnHours = new List<int> { 14, 15, 20, 21 },
-                NotifiedHours = new List<int> { 6 }
-            };
+            var graphicForToday = await MongoProvider.GetDataFromMongoAsync();
 
             if (graphicForToday != null)
             {
