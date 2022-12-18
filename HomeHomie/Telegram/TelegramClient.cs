@@ -3,23 +3,21 @@ using HomeHomie.Database.Entities;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
+using static HomeHomie.Utils;
 
 namespace HomeHomie.Telegram
 {
     internal class TelegramClient
     {
-        private TelegramBotClient _client;
-        private CancellationTokenSource _cts;
+        private readonly TelegramBotClient _client;
+        private readonly CancellationTokenSource _cts;
 
         private static List<(long ChatId, string? Command)> StoredCommands = new();
 
         public TelegramClient()
         {
-            var token = Environment.GetEnvironmentVariable(Variables.TELEGRAM_API_KEY);
-            if (token == null)
-            {
-                Console.WriteLine("Telegram API key is not provided. Telegram bot will not work.");
-            }
+            var token = GetVariable(Variables.TELEGRAM_API_KEY);
 
             _cts = new CancellationTokenSource();
 
@@ -27,11 +25,6 @@ namespace HomeHomie.Telegram
             _client.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: _cts.Token);
 
             Console.WriteLine("Telegram Bot start's receiving messages");
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            _cts.Cancel();
         }
 
         private async Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken cancellationToken)
@@ -55,12 +48,12 @@ namespace HomeHomie.Telegram
 
         private async Task ProcessMessageAsync(ITelegramBotClient bot, Message message)
         {
-            var sender = message.From.Id;
-            var availableChats = Environment.GetEnvironmentVariable(Variables.TELEGRAM_CHATS).Split('|');
+            var sender = message.From!.Id;
+            var availableChats = GetVariable(Variables.TELEGRAM_CHATS).Split('|');
             if (!availableChats.Contains(sender.ToString()))
             {
                 Console.WriteLine("Message from not available user.");
-                Console.WriteLine($"UserId: {sender.ToString()} | UserName: {message.From.Username}");
+                Console.WriteLine($"UserId: {sender} | UserName: {message.From.Username}");
                 Console.WriteLine($"Message: {message.Text}");
                 return;
             }
@@ -87,7 +80,7 @@ namespace HomeHomie.Telegram
 
         private async Task ProcessGraphicMessageAsync(ITelegramBotClient bot, Message message)
         {
-            var chatId = new ChatId(message.From.Id);
+            var chatId = new ChatId(message.From!.Id);
             var graphicForToday = await MongoProvider.GetDataFromMongoAsync();
 
             if (graphicForToday != null)
@@ -102,7 +95,7 @@ namespace HomeHomie.Telegram
 
         private async Task ProcessNewGraphicMessageAsync(ITelegramBotClient bot, Message message)
         {
-            StoredCommands.Add((message.From.Id, "/newgraphic"));
+            StoredCommands.Add((message.From!.Id, "/newgraphic"));
             await bot.SendTextMessageAsync(new ChatId(message.From.Id), "Введите данные нового графика");
         }
 

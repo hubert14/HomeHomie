@@ -1,12 +1,13 @@
 ﻿using HomeHomie.Database.Entities;
 using MongoDB.Driver;
+using static HomeHomie.Utils;
 
 namespace HomeHomie.Database
 {
     static class MongoProvider
     {
-        static string connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING");
-        static string dbName = Environment.GetEnvironmentVariable("MONGO_DATABASE");
+        static string connectionString = GetVariable(Variables.MONGO_CONNECTION_STRING);
+        static string dbName = GetVariable(Variables.MONGO_DATABASE);
 
         public static async Task<ElectricityGraphic?> GetDataFromMongoAsync(string? date = null)
         {
@@ -18,6 +19,7 @@ namespace HomeHomie.Database
         public static async Task UpdateDataInMongoAsync(ElectricityGraphic graphic)
         {
             var collection = GetCollection();
+            graphic.UpdatedAt = DateTime.Now;
             await collection.ReplaceOneAsync(document => document.Date == graphic.Date, graphic);
             Console.WriteLine("Updated graphic for date:" + graphic.Date);
         }
@@ -25,6 +27,7 @@ namespace HomeHomie.Database
         public static async Task AddDataInMongoAsync(ElectricityGraphic graphic)
         {
             var collection = GetCollection();
+            graphic.CreatedAt = DateTime.Now;
             await collection.InsertOneAsync(graphic);
             Console.WriteLine("Inserted graphic for date:" + graphic.Date);
         }

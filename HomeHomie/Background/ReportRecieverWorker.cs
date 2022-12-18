@@ -1,9 +1,11 @@
 ﻿using HomeHomie.Database;
 using HomeHomie.Database.Entities;
+using HomeHomie.Telegram;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using static HomeHomie.Utils;
 
 namespace HomeHomie.Background
 {
@@ -13,26 +15,31 @@ namespace HomeHomie.Background
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new Timer(CheckGraphics, null, TimeSpan.FromMinutes(5), TimeSpan.FromHours(1));
+            _timer = new Timer(ReceiveReports, null, TimeSpan.FromMinutes(0), TimeSpan.FromHours(1));
             return Task.CompletedTask;
         }
 
-        private async void CheckGraphics(object? state)
+        private async void ReceiveReports(object? state)
         {
-            var date = DateTime.Now.ToString("dd.MM.yyyy");
-            var graphic = await MongoProvider.GetDataFromMongoAsync(date);
+            await CheckGraphics(DateTime.Now.AddDays(-1));
+            await CheckGraphics(DateTime.Now);
+            await CheckGraphics(DateTime.Now.AddDays(+1));
+        }
 
-            if (graphic != null)
-            {
-                return;
-            }
+        private async Task CheckGraphics(DateTime date)
+        {
+            var stringDate = date.ToString("dd.MM.yyyy");
+            var graphic = await MongoProvider.GetDataFromMongoAsync(stringDate);
+
+            if (graphic != null) return;
             else
             {
-                Console.WriteLine($"Try to pull graphic from website for date: " + date);
+                Console.WriteLine($"Try to pull graphic from website for date: " + stringDate);
+                string imageLink;
                 Stream imageStream;
                 try
                 {
-                    imageStream = await PullGraphicAsync();
+                    (imageLink, imageStream) = await PullGraphicAsync(date);
                 }
                 catch (Exception e)
                 {
@@ -43,19 +50,21 @@ namespace HomeHomie.Background
                 var data = ProcessImage(imageStream);
                 var newGraphic = new ElectricityGraphic
                 {
-                    Date = date,
+                    Date = stringDate,
+                    ImageLink = imageLink,
                     OnHours = data.Where(x => x.IsLightOn).Select(x => x.Hour).ToList()
                 };
 
                 await MongoProvider.AddDataInMongoAsync(newGraphic);
+                await TelegramProvider.SendMediaMessageAsync(imageLink, newGraphic.ToString());
             }
         }
 
-        private async Task<Stream> PullGraphicAsync()
+        private async Task<(string imageLink, Stream imageStream)> PullGraphicAsync(DateTime date)
         {
             var httpClient = new HttpClient();
-            var siteUrl = "https://" + Environment.GetEnvironmentVariable(Variables.GRAPHIC_DOMAIN);
-            var html = await httpClient.GetStringAsync(siteUrl + "/" + Environment.GetEnvironmentVariable(Variables.GRAPHIC_PAGE));
+            var siteUrl = "https://" + GetVariable(Variables.GRAPHIC_DOMAIN);
+            var html = await httpClient.GetStringAsync(siteUrl + "/" + GetVariable(Variables.GRAPHIC_PAGE));
 
             var document = new HtmlDocument();
             document.LoadHtml(html);
@@ -67,10 +76,12 @@ namespace HomeHomie.Background
             var url = values.GetAttributeValue("src", "~unknown");
 
             var imageName = url.Split('/').Last();
-            var nextDay = DateTime.Now.AddDays(1).ToString("yyyyMMdd");
-            if (!imageName.Contains(nextDay)) throw new Exception("This graphic not for tomorrow. Graphic name: " + imageName);
+            var nextDay = date.AddDays(1).ToString("yyyyMMdd");
+            var twoDays = date.Day + "_" + date.AddDays(1).ToString("ddMMyy");
 
-            return await httpClient.GetStreamAsync(siteUrl + url);
+            if (!imageName.Contains(nextDay) && !imageName.Contains(twoDays)) throw new Exception("This graphic not for requested date. Graphic name: " + imageName + " | Date: " + date.ToString("dd.MM.yy"));
+
+            return (siteUrl + url, await httpClient.GetStreamAsync(siteUrl + url));
         }
 
         private List<(int Hour, bool IsLightOn)> ProcessImage(Stream imageStream)
@@ -78,8 +89,8 @@ namespace HomeHomie.Background
             using var img = Image.Load<Rgb24>(imageStream);
 
             var heigth = img.Size().Height;
-            var startHeightPixel = heigth - 8;
-            var startWidthPixel = 40;
+            var startHeightPixel = heigth - 15;
+            var startWidthPixel = 155;
 
             var black = new Rgb24(0, 0, 0);
             var blue = new Rgb24(0, 176, 240);

@@ -27,13 +27,20 @@ namespace HomeHomie.Background
 
                 var currentHour = DateTime.Now.Hour;
 
-                if (graphic.OffHours.Contains(currentHour + 1) && !graphic.NotifiedHours.Contains(currentHour + 1))
+                if (graphic.OffHours.Contains(currentHour + 1) && !(graphic.NotifiedHours?.Contains(currentHour + 1) ?? false))
                 {
                     var nearestOnHour = graphic.OnHours.FirstOrDefault(x => x > currentHour + 1);
 
-                    await TelegramProvider.SendMessagesToTelegramChatsAsync(currentHour + 1, nearestOnHour);
-                    for (int i = currentHour + 1; i < nearestOnHour; i++)
+
+                    var text = $"😵 Совсем скоро выключат свет!\nВремя отключения: {currentHour+1}:00";
+                    if (nearestOnHour != 0) text += $"\nСледующее включение: {nearestOnHour}:00";
+
+                    await TelegramProvider.SendMessagesToTelegramChatsAsync(text);
+                    if (graphic.NotifiedHours == null) graphic.NotifiedHours = new();
+                    graphic.NotifiedHours.Add(currentHour + 1);
+                    for (int i = currentHour + 2; i < 24; i++)
                     {
+                        if (graphic.OnHours.Contains(i)) break;
                         graphic.NotifiedHours.Add(i);
                     }
                     await MongoProvider.UpdateDataInMongoAsync(graphic);

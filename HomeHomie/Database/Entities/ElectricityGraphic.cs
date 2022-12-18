@@ -7,13 +7,15 @@ namespace HomeHomie.Database.Entities
         public static string CollectionName => "electricityGraphic";
 
         public string Date { get; set; }
+        public string ImageLink { get; set; }
 
-        public List<int> OnHours { get; set; }
+        public List<int> OnHours { get; set; } = new();
         public List<int> OffHours => Enumerable.Range(0, 23).Except(OnHours).ToList();
 
-        public List<int> NotifiedHours { get; set; }
+        public List<int> NotifiedHours { get; set; } = new();
 
-        public override string ToString()
+
+        public List<string> GetOnHoursSegments()
         {
             var segments = new List<string>();
 
@@ -41,12 +43,22 @@ namespace HomeHomie.Database.Entities
                 lastState = state;
             }
 
+            if (OnHours.Contains(23))
+            {
+                segments.Add("23:00");
+            }
+
+            return segments;
+        }
+
+        public override string ToString()
+        {
             return ""
                 + $"⏱ График на <b>{Date}</b>"
                 + $"\n"
                 + $"💡 Часы, в которые должен быть свет:"
                 + $"\n"
-                + $"<b>{string.Join(" | ", segments)}</b>";
+                + $"<b>{string.Join(" | ", GetOnHoursSegments())}</b>";
         }
 
         public static ElectricityGraphic Parse(string text)
