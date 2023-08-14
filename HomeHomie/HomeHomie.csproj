@@ -8,12 +8,12 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-		<PackageReference Include="MongoDB.Driver" Version="2.18.0" />
-		<PackageReference Include="SixLabors.ImageSharp.Web" Version="2.0.2" />
-		<PackageReference Include="Telegram.Bot" Version="18.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\HomeHomie.Infrastructure\HomeHomie.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>

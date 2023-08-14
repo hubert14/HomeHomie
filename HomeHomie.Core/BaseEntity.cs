@@ -1,10 +1,8 @@
-﻿using MongoDB.Bson;
-
-namespace HomeHomie.Database.Entities
+﻿namespace HomeHomie.Core
 {
     public abstract class BaseEntity
     {
-        public ObjectId Id { get; set; }
+        public Guid Id { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
