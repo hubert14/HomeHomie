@@ -2,8 +2,8 @@
 {
     public interface ICacheProvider
     {
-        public Task<T?> GetAsync<T>(string key, bool removeAfterGet = true);
-        public Task<bool> SetAsync<T>(string key, T value, TimeSpan? lifeTime = null);
+        public Task<string> GetAsync(string key, bool removeAfterGet = true);
+        public Task<bool> SetAsync(string key, string value, TimeSpan? lifeTime = null);
         public Task<bool> RemoveAsync(string key);
     }
 }

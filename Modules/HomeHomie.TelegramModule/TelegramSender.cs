@@ -61,7 +61,8 @@ namespace HomeHomie.TelegramModule
                 {
                     chat_id = chat,
                     text = request.Message,
-                    disable_notification = IsSilent
+                    disable_notification = IsSilent,
+                    parse_mode = "html"
                 };
 
                 bool isSuccess = false;

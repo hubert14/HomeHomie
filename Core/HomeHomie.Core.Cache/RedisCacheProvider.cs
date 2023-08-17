@@ -13,20 +13,20 @@ namespace HomeHomie.Core.Cache
             _redis = ConnectionMultiplexer.Connect(cacheSettings.Address ?? throw new ArgumentNullException($"Cache {nameof(cacheSettings.Address)} is not defined under Cache:Address setting"));
         }
 
-        public async Task<T?> GetAsync<T>(string key, bool removeAfterGet = true)
+        public async Task<string> GetAsync(string key, bool removeAfterGet = true)
         {
             var str = await (removeAfterGet
                 ? _redis.GetDatabase().StringGetDeleteAsync(key)
                 : _redis.GetDatabase().StringGetAsync(key));
 
-            return JsonSerializer.Deserialize<T>(str.ToString());
+            if (string.IsNullOrWhiteSpace(str)) return null;
+
+            return str.ToString();
         }
 
-        public async Task<bool> SetAsync<T>(string key, T value, TimeSpan? lifeTime = null)
+        public async Task<bool> SetAsync(string key, string value, TimeSpan? lifeTime = null)
         {
-            var str = JsonSerializer.Serialize(value);
-
-            return await _redis.GetDatabase().StringSetAsync(key, str, lifeTime);
+            return await _redis.GetDatabase().StringSetAsync(key, value, lifeTime);
         }
 
         public async Task<bool> RemoveAsync(string key)

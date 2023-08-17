@@ -21,4 +21,5 @@ static IHostBuilder CreateHostBuilder(string[] args) => new HostBuilder()
 
 var host = CreateHostBuilder(args).Build();
 host.Services.GetRequiredService<INotificationProducerProvider>().StartProducing();
+host.Services.GetRequiredService<INotificationConsumerProvider>().StartReceiving();
 await host.RunAsync();

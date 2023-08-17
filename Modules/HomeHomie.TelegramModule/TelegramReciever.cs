@@ -114,8 +114,11 @@ namespace HomeHomie.TelegramModule
             var storedCommands = await GetCommandsFromCacheAsync(chatId);
             if (storedCommands?.Any() ?? false)
             {
+                await Console.Out.WriteLineAsync("Stored commands: ");
+                await Console.Out.WriteLineAsync(string.Join(CommandsSplitChar, storedCommands));
+
                 // TODO: Decide need to store only last command or all commands?
-                switch (storedCommands.Last())
+                switch (storedCommands.Where(x => !string.IsNullOrWhiteSpace(x)).Last())
                 {
                     case "/newgraphic":
                         _messageBroker.SendMessage(new SendNewGraphicRequestMessage { From = chatId, Body = message.Text! });
@@ -124,10 +127,6 @@ namespace HomeHomie.TelegramModule
                 }
             }
         }
-
-        //private async Task ProcessSaveGraphicMessageAsync(ITelegramBotClient bot, Message message)
-        //{
-
 
         protected virtual void Dispose(bool disposing)
         {
@@ -145,35 +144,20 @@ namespace HomeHomie.TelegramModule
             GC.SuppressFinalize(this);
         }
 
-        public Task NotifyMessageAsync(string text)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task NotifyMediaMessageAsync(string text, Stream media)
-        {
-            throw new NotImplementedException();
-        }
+        const char CommandsSplitChar = ',';
 
         private async Task AddCommandToCacheAsync(string chatId, string command)
         {
             var key = StoredCommandCacheKey(chatId);
-            var existed = await _cache.GetAsync<StoredCommandCacheModel>(key);
-            if (existed == null)
-            {
-                await _cache.SetAsync(key, new List<string> { command });
-            }
-            else
-            {
-                existed.Commands.Add(command);
-                await _cache.SetAsync(key, command);
-            }
+            var existed = await _cache.GetAsync(key);
+            if (existed == null) await _cache.SetAsync(key, command);
+            else await _cache.SetAsync(key, string.Join(CommandsSplitChar, existed, command));
         }
 
         private async Task<List<string>?> GetCommandsFromCacheAsync(string chatId)
         {
-            var result = await _cache.GetAsync<StoredCommandCacheModel>(StoredCommandCacheKey(chatId));
-            return result?.Commands;
+            var result = await _cache.GetAsync(StoredCommandCacheKey(chatId));
+            return result.Split(CommandsSplitChar).ToList();
         }
 
         private async Task RemoveCommandFromCacheAsync(string chatId)
