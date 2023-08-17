@@ -1,0 +1,80 @@
+version: "3.8"
+services:
+# CORE
+  database:
+    image: "mongo:jammy"
+    container_name: hh_mongo
+    volumes:
+      - type: bind
+        source: /data/mongodb/configdb
+        target: /data/configdb
+      - type: bind
+        source: /data/mongodb/db
+        target: /data/db
+    ports:
+      - "49150:27017"
+    networks:
+      - intranet
+    restart: on-failure
+  cache:
+    image: "redis:bookworm"
+    container_name: hh_redis
+    ports:
+      - "49151:6379"
+    networks:
+      - intranet
+    restart: on-failure
+  broker:
+    image: "rabbitmq:3.12.2-management"
+    container_name: hh_rabbitmq
+    volumes:
+      - type: bind
+        source: /data/rabbitmq
+        target: /var/lib/rabbitmq
+    ports:
+      - "49152:5672"
+      - "49153:15672"
+    networks:
+      - intranet
+      - internet
+    hostname: hh_rabbitmq
+    restart: on-failure
+# MODULES
+  electricity:
+    build:
+      context: ./
+      dockerfile: ./Modules/Dockerfile
+      args:
+        module_name: "Electricity"
+    entrypoint: "dotnet HomeHomie.ElectricityModule.dll"
+    container_name: hh_electricity
+    depends_on:
+      - database
+      - cache
+      - broker
+    networks:
+      - intranet
+      - internet
+    restart: on-failure
+  telegram:
+    build:
+      context: ./
+      dockerfile: ./Modules/Dockerfile
+      args:
+        module_name: "Telegram"
+    entrypoint: "dotnet HomeHomie.TelegramModule.dll"
+    container_name: hh_telegram
+    depends_on:
+      - database
+      - cache
+      - broker
+    networks:
+      - internet
+      - intranet
+    restart: on-failure
+networks:
+  intranet:
+    driver: bridge
+    internal: true
+  internet:
+    driver: bridge
