@@ -12,6 +12,7 @@ namespace HomeHomie.ElectricityModule
 
         private readonly Guid _newUserGraphicRecieverKey;
         private readonly Guid _requestGraphicRecieverKey;
+        private readonly Guid _updateMessagesListRecieverKey;
 
         public ReportSaver(IDatabaseProvider database, IBrokerProvider broker)
         {
@@ -20,6 +21,7 @@ namespace HomeHomie.ElectricityModule
 
             _newUserGraphicRecieverKey = _broker.StartRecieving<SendNewGraphicRequestMessage>(SaveUserGraphicAsync);
             _requestGraphicRecieverKey = _broker.StartRecieving<SendGraphicRequestMessage>(GetGraphicAsync);
+            _updateMessagesListRecieverKey = _broker.StartRecieving<SendTelegramMessageResponse>(UpdateGraphicMessagesAsync);
         }
 
         private async Task GetGraphicAsync(SendGraphicRequestMessage? message)
@@ -45,6 +47,23 @@ namespace HomeHomie.ElectricityModule
             _broker.SendMessage(request);
         }
 
+        private async Task UpdateGraphicMessagesAsync(SendTelegramMessageResponse? message)
+        {
+            if (message is null) throw new Exception($"{nameof(message)} is null");
+
+            if (message.ReportDate is null) return;
+
+            var existedGraphic = _database.Get<ElectricityGraphic>()
+                 .Where(x => x.Date == message.ReportDate).FirstOrDefault() 
+                 ?? throw new Exception($"Graphic for date {message.ReportDate} not found.");
+
+            existedGraphic.Messages.Add(new TelegramMessage { ChatId = message.ChatId, MessageId = message.MessageId });
+            
+            Console.WriteLine($"Add message to graphic info. Chat: {message.ChatId} | MessageId: {message.MessageId}");
+            await _database.ReplaceAsync(existedGraphic);
+            Console.WriteLine("Document saved");
+        }
+
         private async Task SaveUserGraphicAsync(SendNewGraphicRequestMessage? message)
         {
             if (message is null) throw new Exception($"{nameof(message)} is null");
@@ -54,12 +73,18 @@ namespace HomeHomie.ElectricityModule
             var existedGraphic = _database.Get<ElectricityGraphic>()
                 .Where(x => x.Date == parsedGraphic.Date).FirstOrDefault();
 
+            string messageHeader;
+
             if (existedGraphic is null)
             {
+                messageHeader = "Появился новый график!";
+
                 await _database.InsertAsync(parsedGraphic);
             }
             else
             {
+                messageHeader = "График обновился!";
+
                 existedGraphic.OnHours = parsedGraphic.OnHours;
                 existedGraphic.UpdatedAt = DateTime.Now;
                 await _database.ReplaceAsync(existedGraphic);
@@ -68,10 +93,9 @@ namespace HomeHomie.ElectricityModule
             const string message_text = "Записал, спасибо!";
             _broker.SendMessage(new SendTelegramMessageRequest { Message = message_text, ChatId = message.From });
 
-            const string MessageHeader = "График был обновлен в ручном режиме!\n";
             _broker.SendMessage(new SendTelegramMessageRequest
             {
-                Message = MessageHeader,
+                Message = messageHeader + "\n\n" + (existedGraphic?.ToString() ?? parsedGraphic?.ToString()),
                 MediaLink = existedGraphic?.ImageLink,
                 ReplyMessageIds = existedGraphic?.Messages.Select(x => new SendTelegramMessageRequest.ReplyToMessage { ChatId = x.ChatId, MessageId = x.MessageId }).ToArray()
             });
@@ -81,6 +105,7 @@ namespace HomeHomie.ElectricityModule
         {
             _broker.StopRecieving(_newUserGraphicRecieverKey);
             _broker.StopRecieving(_requestGraphicRecieverKey);
+            _broker.StopRecieving(_updateMessagesListRecieverKey);
         }
     }
 }

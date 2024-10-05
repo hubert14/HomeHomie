@@ -17,7 +17,7 @@ namespace HomeHomie.Core.MessageBroker
 
         public RabbitMQBroker(IBrokerSettings settings)
         {
-            var factory = new ConnectionFactory { HostName = settings.HostName };
+            var factory = new ConnectionFactory { HostName = settings.HostName, Port = settings.Port.Value };
             _connection = factory.CreateConnection();
         }
 

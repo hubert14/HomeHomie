@@ -12,7 +12,7 @@ services:
         source: /data/mongodb/db
         target: /data/db
     ports:
-      - "49150:27017"
+      - "27017:27017"
     networks:
       - intranet
     hostname: hh_mongo
@@ -34,8 +34,8 @@ services:
         source: /data/rabbitmq
         target: /var/lib/rabbitmq
     ports:
-      - "49152:5672"
-      - "49153:15672"
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - intranet
       - internet

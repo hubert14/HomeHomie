@@ -79,11 +79,7 @@ namespace HomeHomie.TelegramModule
                         continue;
                     }
                     var json = await response.Content.ReadFromJsonAsync<TelegramResponse>();
-                    _messageBroker.SendMessage(new SendTelegramMessageResponse
-                    {
-                        ChatId = chat,
-                        MessageId = json!.result!.message_id.ToString()
-                    });
+                    SendSuccessMessageToBroker(chat, json!.result!.message_id.ToString(), request.ReportDate);
                 }
 
                 Console.WriteLine($"Message sended to chat: {chat}");
@@ -142,18 +138,19 @@ namespace HomeHomie.TelegramModule
                     else
                     {
                         var json = await response.Content.ReadFromJsonAsync<TelegramResponse>();
-                        SendSuccessMessageToBroker(chat, json!.result!.message_id.ToString());
+                        SendSuccessMessageToBroker(chat, json!.result!.message_id.ToString(), request.ReportDate);
                         Console.WriteLine($"Message sended to chat: {chat}");
                     }
                 }
             }
         }
 
-        private void SendSuccessMessageToBroker(string chatId, string messageId)
+        private void SendSuccessMessageToBroker(string chatId, string messageId, string? reportDate)
             => _messageBroker.SendMessage(new SendTelegramMessageResponse
             {
                 ChatId = chatId,
-                MessageId = messageId
+                MessageId = messageId,
+                ReportDate = reportDate
             });
 
         public void Dispose()

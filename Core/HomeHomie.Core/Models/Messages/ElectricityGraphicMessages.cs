@@ -16,5 +16,11 @@ namespace HomeHomie.Core.Models.Messages
         {
             public string From { get; set; }
         }
+
+        public class SendGraphicMessageMessage : BaseMessage
+        {
+            public string ChatId { get; set; }
+            public string MessageId { get; set; }
+        }
     }
 }

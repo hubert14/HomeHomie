@@ -13,6 +13,7 @@ static IHostBuilder CreateHostBuilder(string[] args) => new HostBuilder()
                 services.AddCoreDependencies(hostContext.Configuration);
                 services.ConfigureSettings<IElectricitySettings, ElectricitySettings>(hostContext.Configuration);
 
+                services.AddHostedService<GraphickCheckerService>();
                 services.AddHostedService<ReportRecieverService>();
                 services.AddSingleton<ReportSaver>();
             });

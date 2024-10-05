@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeHomie.ElectricityModule
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeHomie.TelegramModule", "Modules\HomeHomie.TelegramModule\HomeHomie.TelegramModule.csproj", "{38FE0AED-568D-45E5-9A60-91D69B70D3ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeHomie.HomeAssistantModule", "Modules\HomeHomie.HomeAssistantModule\HomeHomie.HomeAssistantModule.csproj", "{942DE96C-E9A7-45CC-AA8F-4C25AEEA964C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeHomie.HomeAssistantModule", "Modules\HomeHomie.HomeAssistantModule\HomeHomie.HomeAssistantModule.csproj", "{942DE96C-E9A7-45CC-AA8F-4C25AEEA964C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

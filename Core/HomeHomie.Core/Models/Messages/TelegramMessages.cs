@@ -15,6 +15,8 @@ namespace HomeHomie.Core.Models.Messages
 
             public bool IsServiceMessage { get; set; } = false;
 
+            public string? ReportDate { get; set; }
+
             public ReplyToMessage[]? ReplyMessageIds { get; set; }
 
             public class ReplyToMessage
@@ -29,6 +31,8 @@ namespace HomeHomie.Core.Models.Messages
         {
             public string ChatId { get; set; }
             public string MessageId { get; set;  }
+
+            public string? ReportDate { get; set; }
         }
     }
 }
